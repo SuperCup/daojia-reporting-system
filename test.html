@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>到家平台提报管理系统</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
+    .login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea, #764ba2); }
+    .login-card { background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); width: 400px; }
+    .login-card h1 { font-size: 20px; text-align: center; margin-bottom: 8px; }
+    .login-card p { text-align: center; color: #999; margin-bottom: 24px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; margin-bottom: 4px; font-size: 14px; color: #666; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #1677ff; }
+    .btn { display: inline-block; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; background: #1677ff; color: #fff; text-decoration: none; }
+    .btn:hover { background: #4096ff; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn-danger { background: #ff4d4f; }
+    .btn-success { background: #52c41a; }
+    .btn-default { background: #fff; color: #333; border: 1px solid #ddd; }
+    .btn-block { width: 100%; }
+    .hint { margin-top: 16px; padding: 12px; background: #f6f8fa; border-radius: 6px; font-size: 12px; color: #666; }
+    .hint p { text-align: left; margin: 2px 0; }
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar { width: 220px; background: #001529; color: #fff; min-height: 100vh; }
+    .sidebar .logo { padding: 16px; text-align: center; font-size: 16px; font-weight: 600; border-bottom: 1px solid #333; }
+    .sidebar .menu-item { padding: 12px 24px; cursor: pointer; transition: background 0.2s; }
+    .sidebar .menu-item:hover, .sidebar .menu-item.active { background: #1677ff; }
+    .main { flex: 1; }
+    .header { background: #fff; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f0f0f0; }
+    .content { padding: 24px; }
+    .card { background: #fff; border-radius: 8px; padding: 24px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+    th { background: #fafafa; font-weight: 600; color: #666; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+    .tag-blue { background: #e6f4ff; color: #1677ff; }
+    .tag-green { background: #f6ffed; color: #52c41a; }
+    .tag-orange { background: #fff7e6; color: #fa8c16; }
+    .tag-red { background: #fff2f0; color: #ff4d4f; }
+    .tag-default { background: #fafafa; color: #999; }
+    .filter-bar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-bar input, .filter-bar select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px; }
+    .stat-card { background: #fff; border-radius: 8px; padding: 20px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .stat-card .stat-title { font-size: 13px; color: #999; margin-bottom: 8px; }
+    .stat-card .stat-value { font-size: 28px; font-weight: 600; }
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.45); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+    .modal { background: #fff; border-radius: 8px; padding: 24px; width: 600px; max-height: 80vh; overflow-y: auto; }
+    .modal h3 { margin-bottom: 16px; }
+    .modal .form-row { display: flex; gap: 16px; margin-bottom: 12px; }
+    .modal .form-row .form-group { flex: 1; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+    .checkbox-list { max-height: 300px; overflow-y: auto; border: 1px solid #f0f0f0; border-radius: 6px; }
+    .checkbox-list label { display: block; padding: 8px 12px; border-bottom: 1px solid #f5f5f5; cursor: pointer; }
+    .checkbox-list label:hover { background: #f5f5f5; }
+    .checkbox-list input[type="checkbox"] { margin-right: 8px; }
+    .detail-row { display: flex; margin-bottom: 8px; }
+    .detail-label { width: 120px; color: #999; flex-shrink: 0; }
+    .detail-value { flex: 1; }
+    .error-msg { color: #ff4d4f; font-size: 13px; margin-top: 8px; }
+    #page-content { display: none; }
+    .nav-back { cursor: pointer; color: #1677ff; margin-bottom: 12px; }
+    .empty { text-align: center; padding: 40px; color: #999; }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .role-tag { font-size: 12px; padding: 2px 8px; border-radius: 4px; }
+    .role-admin { background: #fff7e6; color: #fa8c16; }
+    .role-ops { background: #e6f4ff; color: #1677ff; }
+    .role-client { background: #f6ffed; color: #52c41a; }
+    .pagination { display: flex; gap: 8px; align-items: center; justify-content: flex-end; margin-top: 16px; }
+    .pagination button { padding: 6px 12px; border: 1px solid #ddd; border-radius: 4px; background: #fff; cursor: pointer; font-size: 13px; }
+    .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .pagination .page-info { font-size: 13px; color: #666; margin: 0 8px; }
+    .tab-bar { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid #f0f0f0; }
+    .tab { padding: 10px 24px; cursor: pointer; font-size: 14px; color: #666; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+    .tab.active { color: #1677ff; border-bottom-color: #1677ff; font-weight: 600; }
+    .btn-export { background: #52c41a; }
+    .btn-export:hover { background: #73d13d; }
+  </style>
+</head>
+<body>
+
+<!-- Login Page -->
+<div id="login-page" class="login-page">
+  <div class="login-card">
+    <div id="login-form">
+      <h1>到家平台提报管理系统</h1>
+      <p>请登录您的账号</p>
+      <div class="form-group"><label>用户名</label><input type="text" id="login-username" value="admin"></div>
+      <div class="form-group"><label>密码</label><input type="password" id="login-password" value="admin123456"></div>
+      <button class="btn btn-block" onclick="doLogin()">登录</button>
+      <div class="hint">
+        <p><strong>运营端：</strong>admin / admin123456</p>
+        <p><strong>客户端：</strong>client_jilin / client123456</p>
+        <p style="margin-top:8px;">账号由运营管理员创建，请联系管理员获取</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="page-content" class="layout" style="display:none">
+  <div class="sidebar">
+    <div class="logo">到家提报系统</div>
+    <div id="menu-items"></div>
+  </div>
+  <div class="main">
+    <div class="header">
+      <div class="header-left"><span id="header-title">首页</span><span id="role-badge" class="role-tag"></span></div>
+      <div style="display:flex;align-items:center;gap:12px;"><span id="user-info"></span><button class="btn btn-sm btn-default" onclick="doLogout()">退出登录</button></div>
+    </div>
+    <div class="content" id="content-area"></div>
+  </div>
+</div>
+<div id="modal-container"></div>
+
+<script>
+const SERVER_IP = '192.168.28.99';
+const API = location.protocol === 'file:' ? `http://${SERVER_IP}:8000/api` : (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:8000/api' : `http://${location.hostname}:8000/api`;
+let token = localStorage.getItem('token');
+let currentUser = null;
+let regionsCache = [];
+let platformsCache = [];
+let activitiesCache = [];
+let reportsCache = [];
+let paginationState = { activities: { page: 1, total: 0, pageSize: 10 }, channels: { page: 1, total: 0, pageSize: 15 }, products: { page: 1, total: 0, pageSize: 15 }, reports: { page: 1, total: 0, pageSize: 10 } };
+
+async function apiCall(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(`${API}${path}`, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+  return data;
+}
+
+async function loadRegionsCache() {
+  try { regionsCache = await apiCall('GET', '/regions?status=active'); } catch(e) { regionsCache = []; }
+}
+
+async function doLogin() {
+  const username = document.getElementById('login-username').value;
+  const password = document.getElementById('login-password').value;
+  try {
+    const data = await apiCall('POST', '/auth/login', { username, password });
+    token = data.access_token; currentUser = data;
+    localStorage.setItem('token', token); localStorage.setItem('user', JSON.stringify(data));
+    window.location.hash = data.role === 'client' ? '#client' : '#ops';
+    showApp();
+  } catch (e) { alert('登录失败: ' + e.message); }
+}
+
+function doLogout() {
+  token = null; currentUser = null;
+  localStorage.removeItem('token'); localStorage.removeItem('user');
+  window.location.hash = '';
+  document.getElementById('login-page').style.display = 'flex';
+  document.getElementById('page-content').style.display = 'none';
+}
+
+function showApp() {
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('page-content').style.display = 'flex';
+  document.getElementById('user-info').textContent = `${currentUser.real_name || currentUser.username}`;
+  const roleBadge = document.getElementById('role-badge');
+  const roleMap = { admin: ['管理员', 'role-admin'], ops: ['运营端', 'role-ops'], client: ['客户端', 'role-client'] };
+  const rm = roleMap[currentUser.role] || [currentUser.role, 'role-client'];
+  roleBadge.textContent = rm[0]; roleBadge.className = 'role-tag ' + rm[1];
+  const menu = document.getElementById('menu-items'); menu.innerHTML = '';
+  const clientMenu = [
+    { key: 'activities', label: '活动提报', action: () => loadActivities() },
+    { key: 'channels', label: '渠道管理', action: () => loadChannels() },
+    { key: 'products', label: '商品管理', action: () => loadProducts() },
+    { key: 'account', label: '账号管理', action: () => loadAccount() },
+  ];
+  const opsMenu = [
+    { key: 'dashboard', label: '运营看板', action: () => loadDashboard() },
+    { key: 'reports', label: '提报管理', action: () => loadReports() },
+    { key: 'channels', label: '渠道管理', action: () => loadChannels() },
+    { key: 'products', label: '商品管理', action: () => loadProducts() },
+    { key: 'regions', label: '区域管理', action: () => loadRegionManagement() },
+    { key: 'users', label: '用户管理', action: () => loadUserManagement() },
+    { key: 'account', label: '账号管理', action: () => loadAccount() },
+  ];
+  const menuList = (currentUser.role === 'client') ? clientMenu : opsMenu;
+  menuList.forEach(item => {
+    const div = document.createElement('div'); div.className = 'menu-item'; div.textContent = item.label;
+    div.onclick = () => {
+      document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+      div.classList.add('active');
+      document.getElementById('header-title').textContent = item.label;
+      item.action();
+    };
+    menu.appendChild(div);
+  });
+  menu.children[0].click();
+}
+
+// ── Pagination helper ──
+function renderPagination(containerId, stateKey, reloadFn) {
+  const s = paginationState[stateKey];
+  const totalPages = Math.ceil(s.total / s.pageSize) || 1;
+  const el = document.getElementById(containerId);
+  if (el) {
+    el.innerHTML = `<button onclick="${reloadFn}(${s.page - 1})" ${s.page <= 1 ? 'disabled' : ''}>上一页</button>
+      <span class="page-info">第 ${s.page} / ${totalPages} 页 (共 ${s.total} 条)</span>
+      <button onclick="${reloadFn}(${s.page + 1})" ${s.page >= totalPages ? 'disabled' : ''}>下一页</button>`;
+  }
+}
+
+// ── Activities (with client-side pagination) ──
+async function loadActivities(page) {
+  if (page) paginationState.activities.page = page;
+  const s = paginationState.activities;
+  const content = document.getElementById('content-area');
+  content.innerHTML = `<div class="card"><div class="card-title">活动提报<div style="display:flex;gap:8px"><button class="btn btn-sm" onclick="showImportModal('activities')">导入</button><button class="btn btn-sm" onclick="showActivityForm()">创建活动</button></div></div><div id="act-table">加载中...</div><div id="act-pagination" class="pagination"></div></div>`;
+  try {
+    activitiesCache = await apiCall('GET', '/activities?page_size=100');
+    s.total = activitiesCache.length;
+    renderActivitiesTable();
+  } catch (e) { document.getElementById('act-table').innerHTML = `<p class="error-msg">${e.message}</p>`; }
+}
+function renderActivitiesTable() {
+  const s = paginationState.activities;
+  const start = (s.page-1)*s.pageSize, pageData = activitiesCache.slice(start, start+s.pageSize);
+  const statusMap = { draft: ['草稿','tag-default'], submitted: ['待审核','tag-blue'], approved: ['已通过','tag-green'], rejected: ['已驳回','tag-red'] };
+  let html = `<table><thead><tr><th>区域</th><th>活动时间</th><th>活动机制</th><th>平台</th><th>渠道</th><th>商品</th><th>券数量</th><th>状态</th><th>操作</th></tr></thead><tbody>`;
+  if (pageData.length === 0) html += '<tr><td colspan="9" class="empty">暂无活动，点击右上角创建</td></tr>';
+  pageData.forEach(a => {
+    const st = statusMap[a.status] || [a.status, 'tag-default'];
+    html += `<tr><td>${a.region}</td><td>${a.activity_time}</td><td>${a.mechanism}</td><td>${a.platform_name||'-'}</td><td>${a.channels?.length||0}</td><td>${a.products?.length||0}</td><td>${a.voucher_quantity?.toLocaleString()||'-'}</td><td><span class="tag ${st[1]}">${st[0]}</span></td><td><button class="btn btn-sm btn-default" onclick="viewActivity('${a.id}')">查看</button> ${(a.status==='draft'||a.status==='rejected')?`<button class="btn btn-sm" onclick="showActivityForm('${a.id}')">编辑</button> <button class="btn btn-sm btn-success" onclick="submitActivity('${a.id}')">提交</button> <button class="btn btn-sm btn-danger" onclick="deleteActivity('${a.id}')">删除</button>`:''}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('act-table').innerHTML = html;
+  renderPagination('act-pagination', 'activities', 'loadActivities');
+}
+
+async function submitActivity(id) { if (!confirm('确定提交此活动？')) return; try { await apiCall('POST', `/activities/${id}/submit`); alert('提交成功'); loadActivities(); } catch (e) { alert(e.message); } }
+async function deleteActivity(id) { if (!confirm('确定删除？')) return; try { await apiCall('DELETE', `/activities/${id}`); alert('已删除'); loadActivities(); } catch (e) { alert(e.message); } }
+
+async function showActivityForm(id) {
+  let platforms=[], channels=[], products=[];
+  await loadRegionsCache();
+  try { [platforms, channels, products] = await Promise.all([apiCall('GET','/platforms'), apiCall('GET','/channels?page_size=200'), apiCall('GET','/products?page_size=200')]); } catch(e){ alert('加载失败: '+e.message); return; }
+  let act = id ? await apiCall('GET', `/activities/${id}`) : null;
+  const pfOpts = platforms.map(p => `<option value="${p.id}" ${act?.platform_id===p.id?'selected':''}>${p.name}</option>`).join('');
+  const regionOpts = regionsCache.map(r => `<option value="${r.name}" ${act?.region===r.name?'selected':''}>${r.name}</option>`).join('');
+  const chList = channels.map(ch => `<label><input type="checkbox" value="${ch.id}" data-type="channel" ${act?.channels?.some(c=>c.id===ch.id)?'checked':''}> ${ch.name} (${ch.channel_type})</label>`).join('');
+  const pdList = products.map(p => `<label><input type="checkbox" value="${p.id}" data-type="product" ${act?.products?.some(pr=>pr.id===p.id)?'checked':''}> ${p.name} [${p.upc}]</label>`).join('');
+  document.getElementById('content-area').innerHTML = `
+    <div class="nav-back" onclick="loadActivities()">← 返回列表</div>
+    <div class="card"><div class="card-title">${id?'编辑活动':'创建活动'}</div>
+      <div style="display:flex;gap:16px;"><div class="form-group" style="flex:1"><label>区域 *</label><select id="act-region"><option value="">--选择区域--</option>${regionOpts}</select></div><div class="form-group" style="flex:1"><label>活动时间 *</label><input type="text" id="act-time" value="${act?.activity_time||''}"></div></div>
+      <div style="display:flex;gap:16px;"><div class="form-group" style="flex:1"><label>活动机制 *</label><input type="text" id="act-mechanism" value="${act?.mechanism||''}"></div><div class="form-group" style="flex:1"><label>平台</label><select id="act-platform"><option value="">--选择--</option>${pfOpts}</select></div></div>
+      <div style="display:flex;gap:16px;"><div class="form-group" style="flex:1"><label>券数量</label><input type="number" id="act-voucher" value="${act?.voucher_quantity||''}"></div><div class="form-group" style="flex:1"><label>预算</label><input type="number" id="act-budget" value="${act?.budget||''}"></div><div class="form-group" style="flex:1"><label>品牌</label><input type="text" id="act-brand" value="${act?.brand||''}"></div></div>
+      <div class="form-group"><label>备注</label><input type="text" id="act-remarks" value="${act?.remarks||''}"></div>
+    </div>
+    <div class="card"><div class="card-title">投放渠道 <span style="font-size:13px;color:#1677ff" id="ch-count">0 已选</span></div><div class="checkbox-list">${chList}</div></div>
+    <div class="card"><div class="card-title">投放商品 <span style="font-size:13px;color:#1677ff" id="pd-count">0 已选</span></div><div class="checkbox-list">${pdList}</div></div>
+    <div style="display:flex;gap:8px"><button class="btn" onclick="saveActivity('${id||''}',false)">保存草稿</button><button class="btn btn-success" onclick="saveActivity('${id||''}',true)">保存并提交</button></div>`;
+  updateCbCounts();
+  document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.addEventListener('change', updateCbCounts));
+}
+function updateCbCounts() {
+  document.getElementById('ch-count').textContent = `${document.querySelectorAll('input[data-type="channel"]:checked').length} 已选`;
+  document.getElementById('pd-count').textContent = `${document.querySelectorAll('input[data-type="product"]:checked').length} 已选`;
+}
+async function saveActivity(id, submit) {
+  const payload = { region: document.getElementById('act-region').value, activity_time: document.getElementById('act-time').value, mechanism: document.getElementById('act-mechanism').value, platform_id: document.getElementById('act-platform').value||null, voucher_quantity: parseInt(document.getElementById('act-voucher').value)||null, budget: parseFloat(document.getElementById('act-budget').value)||null, brand: document.getElementById('act-brand').value, remarks: document.getElementById('act-remarks').value, channel_ids: [...document.querySelectorAll('input[data-type="channel"]:checked')].map(cb=>cb.value), product_ids: [...document.querySelectorAll('input[data-type="product"]:checked')].map(cb=>cb.value) };
+  if (!payload.region) { alert('请选择区域'); return; }
+  try { let r; if (id) { r = await apiCall('PATCH', `/activities/${id}`, payload); if (submit) await apiCall('POST', `/activities/${id}/submit`); } else { r = await apiCall('POST', '/activities', payload); if (submit) await apiCall('POST', `/activities/${r.id}/submit`); } alert(submit?'已保存并提交':'已保存草稿'); loadActivities(); } catch (e) { alert(e.message); } }
+async function viewActivity(id) {
+  const content = document.getElementById('content-area');
+  try { const act = await apiCall('GET', `/activities/${id}`); const statusMap = { draft:['草稿','tag-default'], submitted:['待审核','tag-blue'], approved:['已通过','tag-green'], rejected:['已驳回','tag-red'] }; const st = statusMap[act.status]||[act.status,'tag-default'];
+    let chHtml = act.channels?.map(ch=>`<tr><td>${ch.name}</td><td>${ch.channel_type}</td><td>${ch.platform_name||'-'}</td><td>${ch.platform_store_id||'-'}</td></tr>`).join('')||'<tr><td colspan="4">无</td></tr>';
+    let pdHtml = act.products?.map(p=>`<tr><td>${p.upc}</td><td>${p.name}</td><td>${p.brand_series||'-'}</td><td>${p.spec||'-'}</td></tr>`).join('')||'<tr><td colspan="4">无</td></tr>';
+    content.innerHTML = `<div class="nav-back" onclick="loadActivities()">← 返回列表</div>
+      <div class="card"><div class="card-title">活动详情</div>
+        <div class="detail-row"><div class="detail-label">区域</div><div class="detail-value">${act.region}</div></div>
+        <div class="detail-row"><div class="detail-label">活动时间</div><div class="detail-value">${act.activity_time}</div></div>
+        <div class="detail-row"><div class="detail-label">活动机制</div><div class="detail-value">${act.mechanism}</div></div>
+        <div class="detail-row"><div class="detail-label">平台</div><div class="detail-value">${act.platform_name||'-'}</div></div>
+        <div class="detail-row"><div class="detail-label">券数量</div><div class="detail-value">${act.voucher_quantity?.toLocaleString()||'-'}</div></div>
+        <div class="detail-row"><div class="detail-label">状态</div><div class="detail-value"><span class="tag ${st[1]}">${st[0]}</span></div></div>
+        <div class="detail-row"><div class="detail-label">提报人</div><div class="detail-value">${act.creator_name||'-'}</div></div>
+      </div>
+      <div class="card"><div class="card-title">投放渠道 (${act.channels?.length||0})</div><table><thead><tr><th>名称</th><th>类型</th><th>平台</th><th>店铺ID</th></tr></thead><tbody>${chHtml}</tbody></table></div>
+      <div class="card"><div class="card-title">投放商品 (${act.products?.length||0})</div><table><thead><tr><th>UPC</th><th>名称</th><th>品牌</th><th>规格</th></tr></thead><tbody>${pdHtml}</tbody></table></div>
+      ${(act.status==='draft'||act.status==='rejected')?`<button class="btn" onclick="showActivityForm('${act.id}')">编辑</button> <button class="btn btn-success" onclick="submitActivity('${act.id}')">提交</button> <button class="btn btn-danger" onclick="deleteActivity('${act.id}')">删除</button>`:''}`;
+  } catch(e) { content.innerHTML = `<p class="error-msg">${e.message}</p>`; }
+}
+
+// ── Dashboard ──
+async function loadDashboard() {
+  const content = document.getElementById('content-area');
+  try {
+    const stats = await apiCall('GET', '/reports/dashboard');
+    content.innerHTML = `<div class="stats-grid">
+      <div class="stat-card"><div class="stat-title">活动总数</div><div class="stat-value">${stats.total_activities}</div></div>
+      <div class="stat-card"><div class="stat-title">待审核</div><div class="stat-value" style="color:#1677ff">${stats.submitted_activities}</div></div>
+      <div class="stat-card"><div class="stat-title">已通过</div><div class="stat-value" style="color:#52c41a">${stats.approved_activities}</div></div>
+      <div class="stat-card"><div class="stat-title">渠道总数</div><div class="stat-value">${stats.total_channels}</div></div>
+      <div class="stat-card"><div class="stat-title">商品总数</div><div class="stat-value">${stats.total_products}</div></div>
+      <div class="stat-card"><div class="stat-title">待审用户</div><div class="stat-value" style="color:#fa8c16">${stats.pending_users}</div></div>
+      <div class="stat-card"><div class="stat-title">总预算</div><div class="stat-value">${(stats.total_budget||0).toLocaleString()}</div></div>
+    </div>`;
+    const acts = await apiCall('GET', '/activities?page_size=10');
+    const statusMap = { draft:['草稿','default'], submitted:['待审','blue'], approved:['通过','green'], rejected:['驳回','red'] };
+    let html = '<div class="card"><div class="card-title">最近提报</div><table><thead><tr><th>区域</th><th>活动机制</th><th>平台</th><th>状态</th><th>提报人</th><th>操作</th></tr></thead><tbody>';
+    acts.forEach(a => { const st = statusMap[a.status]||[a.status,'default']; html += `<tr><td>${a.region}</td><td>${a.mechanism}</td><td>${a.platform_name||'-'}</td><td><span class="tag tag-${st[1]}">${st[0]}</span></td><td>${a.creator_name||'-'}</td><td><button class="btn btn-sm btn-default" onclick="viewReportDetail('${a.id}')">明细</button>${a.status==='submitted'?` <button class="btn btn-sm btn-success" onclick="reviewActivity('${a.id}','approved')">通过</button> <button class="btn btn-sm btn-danger" onclick="reviewActivity('${a.id}','rejected')">驳回</button>`:''}</td></tr>`; });
+    html += '</tbody></table></div>';
+    content.innerHTML += html;
+  } catch(e) { content.innerHTML = `<p class="error-msg">${e.message}</p>`; }
+}
+async function reviewActivity(id, status) { const c = status==='rejected'?prompt('驳回原因（选填）:'):''; try { await apiCall('POST', `/activities/${id}/review`, { status, review_comment: c||null }); alert(status==='approved'?'已通过':'已驳回'); loadDashboard(); } catch(e) { alert(e.message); } }
+async function viewReportDetail(id) { const content = document.getElementById('content-area'); try { const act = await apiCall('GET', `/reports/activities/${id}/detail`); let chHtml = act.channels?.map(ch=>`<tr><td>${ch.name}</td><td>${ch.channel_type}</td><td>${ch.platform_name||'-'}</td><td>${ch.platform_store_id||'-'}</td></tr>`).join('')||''; let pdHtml = act.products?.map(p=>`<tr><td>${p.upc}</td><td>${p.name}</td><td>${p.brand_series||'-'}</td><td>${p.spec||'-'}</td></tr>`).join('')||''; content.innerHTML = `<div class="nav-back" onclick="loadDashboard()">← 返回看板</div><div class="card"><div class="card-title">提报明细</div><div class="detail-row"><div class="detail-label">区域</div><div class="detail-value">${act.region}</div></div><div class="detail-row"><div class="detail-label">活动时间</div><div class="detail-value">${act.activity_time}</div></div><div class="detail-row"><div class="detail-label">活动机制</div><div class="detail-value">${act.mechanism}</div></div><div class="detail-row"><div class="detail-label">券数量</div><div class="detail-value">${act.voucher_quantity?.toLocaleString()||'-'}</div></div><div class="detail-row"><div class="detail-label">状态</div><div class="detail-value">${act.status}</div></div><div class="detail-row"><div class="detail-label">提报人</div><div class="detail-value">${act.creator_name||'-'}</div></div><div class="detail-row"><div class="detail-label">审核人</div><div class="detail-value">${act.reviewer_name||'-'}</div></div><div class="detail-row"><div class="detail-label">审核意见</div><div class="detail-value">${act.review_comment||'-'}</div></div></div><div class="card"><div class="card-title">投放渠道 (${act.channels?.length||0})</div><table><thead><tr><th>名称</th><th>类型</th><th>平台</th><th>店铺ID</th></tr></thead><tbody>${chHtml}</tbody></table></div><div class="card"><div class="card-title">投放商品 (${act.products?.length||0})</div><table><thead><tr><th>UPC</th><th>名称</th><th>品牌</th><th>规格</th></tr></thead><tbody>${pdHtml}</tbody></table></div>`; } catch(e) { content.innerHTML = `<p class="error-msg">${e.message}</p>`; } }
+
+// ── Reports (with filters + export) ──
+async function loadReports(page) {
+  if (page) paginationState.reports.page = page;
+  const s = paginationState.reports;
+  const content = document.getElementById('content-area');
+  await loadRegionsCache();
+  let platformsList = [];
+  try { platformsList = await apiCall('GET', '/platforms'); } catch(e) {}
+  const regionOpts = regionsCache.map(r => `<option value="${r.name}">${r.name}</option>`).join('');
+  const platformOpts = platformsList.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  content.innerHTML = `<div class="card"><div class="card-title">提报管理<div style="display:flex;gap:8px"><button class="btn btn-sm btn-export" onclick="exportActivities()">导出</button></div></div>
+    <div class="filter-bar">
+      <select id="rep-filter-region" onchange="reloadReports(1)"><option value="">全部区域</option>${regionOpts}</select>
+      <select id="rep-filter-platform" onchange="reloadReports(1)"><option value="">全部平台</option>${platformOpts}</select>
+      <select id="rep-filter-status" onchange="reloadReports(1)"><option value="">全部状态</option><option value="draft">草稿</option><option value="submitted">待审核</option><option value="approved">已通过</option><option value="rejected">已驳回</option></select>
+    </div>
+    <div id="rep-table">加载中...</div><div id="rep-pagination" class="pagination"></div></div>`;
+  reloadReports();
+}
+
+async function reloadReports(page) {
+  if (page) paginationState.reports.page = page;
+  const s = paginationState.reports;
+  const region = document.getElementById('rep-filter-region')?.value || '';
+  const platformId = document.getElementById('rep-filter-platform')?.value || '';
+  const status = document.getElementById('rep-filter-status')?.value || '';
+  let params = 'page_size=100';
+  if (region) params += `&region=${encodeURIComponent(region)}`;
+  if (platformId) params += `&platform_id=${platformId}`;
+  if (status) params += `&status=${status}`;
+  try {
+    reportsCache = await apiCall('GET', `/activities?${params}`);
+    s.total = reportsCache.length;
+    const start = (s.page-1)*s.pageSize, pageData = reportsCache.slice(start, start+s.pageSize);
+    const statusMap = { draft:['草稿','default'], submitted:['待审','blue'], approved:['通过','green'], rejected:['驳回','red'] };
+    let html = `<table><thead><tr><th>区域</th><th>活动时间</th><th>活动机制</th><th>平台</th><th>券数量</th><th>状态</th><th>提报人</th><th>操作</th></tr></thead><tbody>`;
+    if (pageData.length === 0) html += '<tr><td colspan="8" class="empty">暂无数据</td></tr>';
+    pageData.forEach(a => { const st = statusMap[a.status]||[a.status,'default']; html += `<tr><td>${a.region}</td><td>${a.activity_time}</td><td>${a.mechanism}</td><td>${a.platform_name||'-'}</td><td>${a.voucher_quantity?.toLocaleString()||'-'}</td><td><span class="tag tag-${st[1]}">${st[0]}</span></td><td>${a.creator_name||'-'}</td><td><button class="btn btn-sm btn-default" onclick="viewReportDetail('${a.id}')">明细</button>${a.status==='submitted'?` <button class="btn btn-sm btn-success" onclick="reviewActivity('${a.id}','approved')">通过</button> <button class="btn btn-sm btn-danger" onclick="reviewActivity('${a.id}','rejected')">驳回</button>`:''}</td></tr>`; });
+    html += '</tbody></table>';
+    document.getElementById('rep-table').innerHTML = html;
+    renderPagination('rep-pagination', 'reports', 'reloadReports');
+  } catch(e) { document.getElementById('rep-table').innerHTML = `<p class="error-msg">${e.message}</p>`; }
+}
+
+async function exportActivities() {
+  const region = document.getElementById('rep-filter-region')?.value || '';
+  const platformId = document.getElementById('rep-filter-platform')?.value || '';
+  const status = document.getElementById('rep-filter-status')?.value || '';
+  let params = '';
+  if (region) params += `region=${encodeURIComponent(region)}&`;
+  if (platformId) params += `platform_id=${platformId}&`;
+  if (status) params += `status=${status}&`;
+  try {
+    const data = await apiCall('GET', `/reports/export/summary?${params}`);
+    if (!data.rows || data.rows.length === 0) { alert('没有可导出的数据'); return; }
+    // Build CSV
+    const bom = '\uFEFF';
+    const header = data.columns.join(',');
+    const rows = data.rows.map(row => data.columns.map(col => {
+      let val = row[col] ?? '';
+      val = String(val).replace(/"/g, '""');
+      return `"${val}"`;
+    }).join(','));
+    const csv = bom + header + '\n' + rows.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `活动提报列表_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch(e) { alert('导出失败: ' + e.message); }
+}
+
+// ── Channels (with pagination + CRUD) ──
+let channelsCache = [];
+async function loadChannels(page) {
+  if (page) paginationState.channels.page = page;
+  const s = paginationState.channels;
+  const content = document.getElementById('content-area');
+  try {
+    let pfList = [];
+    [channelsCache, pfList] = await Promise.all([apiCall('GET', '/channels?page_size=200&status='), apiCall('GET', '/platforms')]);
+    platformsCache = pfList;
+    s.total = channelsCache.length;
+    const types = [...new Set(channelsCache.map(c=>c.channel_type).filter(Boolean))];
+    content.innerHTML = `<div class="card"><div class="card-title">渠道管理<div style="display:flex;gap:8px"><button class="btn btn-sm" onclick="showImportModal('channels')">导入</button><button class="btn btn-sm" onclick="showChannelModal()">新增渠道</button></div></div><div class="filter-bar"><select id="ch-filter-type" onchange="renderChannelsTable()"><option value="">全部类型</option>${types.map(t=>`<option value="${t}">${t}</option>`).join('')}</select><input type="text" id="ch-filter-kw" placeholder="搜索渠道名称/店铺ID" oninput="renderChannelsTable()"></div><div id="ch-table"></div><div id="ch-pagination" class="pagination"></div></div>`;
+    renderChannelsTable();
+  } catch(e) { content.innerHTML = `<p class="error-msg">${e.message}</p>`; }
+}
+function renderChannelsTable() {
+  const s = paginationState.channels;
+  const filterType = document.getElementById('ch-filter-type')?.value||'';
+  const filterKw = document.getElementById('ch-filter-kw')?.value||'';
+  const filtered = channelsCache.filter(ch => { if (filterType && ch.channel_type !== filterType) return false; if (filterKw && !ch.name.includes(filterKw) && !(ch.platform_store_id||'').includes(filterKw)) return false; return true; });
+  s.total = filtered.length;
+  const start = (s.page-1)*s.pageSize, pageData = filtered.slice(start, start+s.pageSize);
+  let html = `<table><thead><tr><th>渠道名称</th><th>类型</th><th>平台</th><th>店铺ID</th><th>区域</th><th>状态</th><th>操作</th></tr></thead><tbody>`;
+  if (pageData.length === 0) html += '<tr><td colspan="7" class="empty">暂无数据</td></tr>';
+  pageData.forEach(ch => { html += `<tr><td>${ch.name}</td><td><span class="tag tag-blue">${ch.channel_type}</span></td><td>${ch.platform_name||'-'}</td><td>${ch.platform_store_id||'-'}</td><td>${ch.region||'-'}</td><td><span class="tag ${ch.status==='active'?'tag-green':'tag-default'}">${ch.status==='active'?'启用':'停用'}</span></td><td><button class="btn btn-sm btn-default" onclick="showChannelModal('${ch.id}')">编辑</button> <button class="btn btn-sm btn-danger" onclick="deleteChannel('${ch.id}')">删除</button></td></tr>`; });
+  html += '</tbody></table>';
+  document.getElementById('ch-table').innerHTML = html;
+  renderPagination('ch-pagination', 'channels', 'loadChannels');
+}
+function showChannelModal(id) {
+  const ch = id ? channelsCache.find(c=>c.id===id) : null;
+  const pfOpts = platformsCache.map(p=>`<option value="${p.id}" ${ch?.platform_id===p.id?'selected':''}>${p.name}</option>`).join('');
+  const types = ['便利','超市','KA超市','酒专营','散店','全渠道','闪电仓'];
+  const typeOpts = types.map(t=>`<option value="${t}" ${ch?.channel_type===t?'selected':''}>${t}</option>`).join('');
+  document.getElementById('modal-container').innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal"><h3>${ch?'编辑渠道':'新增渠道'}</h3><div class="form-group"><label>渠道名称 *</label><input type="text" id="ch-name" value="${ch?.name||''}"></div><div style="display:flex;gap:16px;"><div class="form-group" style="flex:1"><label>渠道类型 *</label><select id="ch-type"><option value="">--选择--</option>${typeOpts}</select></div><div class="form-group" style="flex:1"><label>所属平台</label><select id="ch-platform"><option value="">--选择--</option>${pfOpts}</select></div></div><div class="form-group"><label>平台店铺ID</label><input type="text" id="ch-store-id" value="${ch?.platform_store_id||''}"></div><div style="display:flex;gap:16px;"><div class="form-group" style="flex:1"><label>区域</label><input type="text" id="ch-region" value="${ch?.region||''}"></div><div class="form-group" style="flex:1"><label>联系人</label><input type="text" id="ch-contact" value="${ch?.contact||''}"></div></div><div class="form-group"><label>地址</label><input type="text" id="ch-address" value="${ch?.address||''}"></div><div class="modal-actions"><button class="btn btn-default" onclick="closeModal()">取消</button><button class="btn" onclick="saveChannel('${id||''}')">保存</button></div></div></div>`;
+  if (ch) { document.getElementById('ch-type').value = ch.channel_type||''; document.getElementById('ch-platform').value = ch.platform_id||''; }
+}
+async function saveChannel(id) {
+  const payload = { name: document.getElementById('ch-name').value, channel_type: document.getElementById('ch-type').value, platform_id: document.getElementById('ch-platform').value||null, platform_store_id: document.getElementById('ch-store-id').value||null, region: document.getElementById('ch-region').value||null, contact: document.getElementById('ch-contact').value||null, address: document.getElementById('ch-address').value||null };
+  if (!payload.name||!payload.channel_type) { alert('请填写渠道名称和类型'); return; }
+  try { if (id) { await apiCall('PATCH', `/channels/${id}`, payload); alert('已更新'); } else { await apiCall('POST', '/channels', payload); alert('已创建'); } closeModal(); await loadChannels(); } catch(e) { alert(e.message); }
+}
+async function deleteChannel(id) { if (!confirm('确定删除？')) return; try { await apiCall('DELETE', `/channels/${id}`); alert('已删除'); await loadChannels(); } catch(e) { alert(e.message); } }
+
+// ── Products (with pagination + CRUD) ──
+let productsCache = [];
+async function loadProducts(page) {
+  if (page) paginationState.products.page = page;
+  const s = paginationState.products;
+  const content = document.getElementById('content-area');
+  try { productsCache = await apiCall('GET', '/products?page_size=200&status='); s.total = productsCache.length;
+    const brands = [...new Set(productsCache.map(p=>p.brand_series).filter(Boolean))];
+    content.innerHTML = `<div class="card"><div class="card-title">商品管理<div style="display:flex;gap:8px"><button class="btn btn-sm" onclick="showImportModal('products')">导入</button><button class="btn btn-sm" onclick="showProductModal()">新增商品</button></div></div><div class="filter-bar"><select id="pd-filter-brand" onchange="renderProductsTable()"><option value="">全部品牌</option>${brands.map(b=>`<option value="${b}">${b}</option>`).join('')}</select><input type="text" id="pd-filter-kw" placeholder="搜索产品名称/UPC" oninput="renderProductsTable()"></div><div id="pd-table"></div><div id="pd-pagination" class="pagination"></div></div>`;
+    renderProductsTable();
+  } catch(e) { content.innerHTML = `<p class="error-msg">${e.message}</p>`; }
+}
+function renderProductsTable() {
+  const s = paginationState.products;
+  const filterBrand = document.getElementById('pd-filter-brand')?.value||'';
+  const filterKw = document.getElementById('pd-filter-kw')?.value||'';
+  const filtered = productsCache.filter(p => { if (filterBrand && p.brand_series !== filterBrand) return false; if (filterKw && !p.name.includes(filterKw) && !p.upc.includes(filterKw)) return false; return true; });
+  s.total = filtered.length;
+  const start = (s.page-1)*s.pageSize, pageData = filtered.slice(start, start+s.pageSize);
+  let html = `<table><thead><tr><th>UPC</th><th>产品名称</th><th>品牌系列</th><th>中心系列</th><th>规格</th><th>装箱数</th><th>状态</th><th>操作</th></tr></thead><tbody>`;
+  if (pageData.length === 0) html += '<tr><td colspan="8" class="empty">暂无数据</td></tr>';
+  pageData.forEach(p => { html += `<tr><td>${p.upc}</td><td>${p.name}</td><td>${p.brand_series||'-'}</td><td>${p.center_series||'-'}</td><td>${p.spec||'-'}</td><td>${p.pack_quantity||'-'}</td><td><span class="tag ${p.status==='active'?'tag-green':'tag-default'}">${p.status==='active'?'启用':'停用'}</span></td><td><button class="btn btn-sm btn-default" onclick="showProductModal('${p.id}')">编辑</button> <button class="btn btn-sm btn-danger" onclick="deleteProduct('${p.id}')">删除</button></td></tr>`; });
+  html += '</tbody></table>';
+  document.getElementById('pd-table').innerHTML = html;
+  renderPagination('pd-pagination', 'products', 'loadProducts');
+}
+function showProductModal(id) {
+  const p = id ? productsCache.find(pr=>pr.id===id) : null;
+  document.getElementById('modal-container').innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal"><h3>${p?'编辑商品':'新增商品'}</h3><div class="form-group"><label>UPC条码 *</label><input type="text" id="pd-upc" value="${p?.upc||''}" ${p?'readonly style="background:#f5f5f5"':''}></div><div class="form-group"><label>产品名称 *</label><input type="text" id="pd-name" value="${p?.name||''}"></div><div style="display:flex;gap:16px;"><div class="form-group" style="flex:1"><label>品牌系列</label><input type="text" id="pd-brand" value="${p?.brand_series||''}"></div><div class="form-group" style="flex:1"><label>中心系列</label><input type="text" id="pd-center" value="${p?.center_series||''}"></div></div><div style="display:flex;gap:16px;"><div class="form-group" style="flex:1"><label>明细系列</label><input type="text" id="pd-detail" value="${p?.detail_series||''}"></div><div class="form-group" style="flex:1"><label>规格(ml)</label><input type="text" id="pd-spec" value="${p?.spec||''}"></div><div class="form-group" style="flex:1"><label>装箱数</label><input type="number" id="pd-pack" value="${p?.pack_quantity||''}"></div></div><div class="modal-actions"><button class="btn btn-default" onclick="closeModal()">取消</button><button class="btn" onclick="saveProduct('${id||''}')">保存</button></div></div></div>`;
+}
+async function saveProduct(id) {
+  const payload = { upc: document.getElementById('pd-upc').value, name: document.getElementById('pd-name').value, brand_series: document.getElementById('pd-brand').value||null, center_series: document.getElementById('pd-center').value||null, detail_series: document.getElementById('pd-detail').value||null, spec: document.getElementById('pd-spec').value||null, pack_quantity: parseInt(document.getElementById('pd-pack').value)||null };
+  if (!payload.upc||!payload.name) { alert('请填写UPC和产品名称'); return; }
+  try { if (id) { await apiCall('PATCH', `/products/${id}`, payload); alert('已更新'); } else { await apiCall('POST', '/products', payload); alert('已创建'); } closeModal(); await loadProducts(); } catch(e) { alert(e.message); }
+}
+async function deleteProduct(id) { if (!confirm('确定删除？')) return; try { await apiCall('DELETE', `/products/${id}`); alert('已删除'); await loadProducts(); } catch(e) { alert(e.message); } }
+function closeModal() { document.getElementById('modal-container').innerHTML = ''; }
+
+// ── Region Management (ops only) ──
+async function loadRegionManagement() {
+  const content = document.getElementById('content-area');
+  content.innerHTML = `<div class="card"><div class="card-title">区域管理<button class="btn btn-sm" onclick="showRegionModal()">新增区域</button></div><div id="region-table">加载中...</div></div>`;
+  try {
+    const data = await apiCall('GET', '/regions?page_size=200');
+    let html = `<table><thead><tr><th>区域名称</th><th>编码</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody>`;
+    if (data.length === 0) html += '<tr><td colspan="5" class="empty">暂无区域，点击右上角新增</td></tr>';
+    data.forEach(r => {
+      html += `<tr><td>${r.name}</td><td>${r.code||'-'}</td><td><span class="tag ${r.status==='active'?'tag-green':'tag-default'}">${r.status==='active'?'启用':'停用'}</span></td><td>${r.created_at?new Date(r.created_at).toLocaleString('zh-CN'):'-'}</td><td><button class="btn btn-sm btn-default" onclick="showRegionModal('${r.id}')">编辑</button> <button class="btn btn-sm btn-danger" onclick="deleteRegion('${r.id}')">停用</button></td></tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('region-table').innerHTML = html;
+  } catch(e) { document.getElementById('region-table').innerHTML = `<p class="error-msg">${e.message}</p>`; }
+}
+
+function showRegionModal(id) {
+  if (id) {
+    apiCall('GET', '/regions?page_size=200').then(regions => {
+      const r = regions.find(x => x.id === id);
+      if (!r) return;
+      renderRegionModal(r);
+    });
+  } else {
+    renderRegionModal(null);
+  }
+}
+
+function renderRegionModal(r) {
+  document.getElementById('modal-container').innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal"><h3>${r?'编辑区域':'新增区域'}</h3>
+    <div class="form-group"><label>区域名称 *</label><input type="text" id="rg-name" value="${r?.name||''}" placeholder="如：吉林省区"></div>
+    <div class="form-group"><label>编码</label><input type="text" id="rg-code" value="${r?.code||''}" placeholder="如：jilin（选填）"></div>
+    <div class="modal-actions"><button class="btn btn-default" onclick="closeModal()">取消</button><button class="btn" onclick="saveRegion('${r?.id||''}')">保存</button></div></div></div>`;
+}
+
+async function saveRegion(id) {
+  const payload = { name: document.getElementById('rg-name').value, code: document.getElementById('rg-code').value || null };
+  if (!payload.name) { alert('请填写区域名称'); return; }
+  try {
+    if (id) { await apiCall('PATCH', `/regions/${id}`, payload); alert('已更新'); }
+    else { await apiCall('POST', '/regions', payload); alert('已创建'); }
+    closeModal(); loadRegionManagement();
+  } catch(e) { alert(e.message); }
+}
+
+async function deleteRegion(id) {
+  if (!confirm('确定停用此区域？')) return;
+  try { await apiCall('DELETE', `/regions/${id}`); alert('已停用'); loadRegionManagement(); } catch(e) { alert(e.message); }
+}
+
+// ── User Management (ops only — two tabs) ──
+let userMgmtTab = 'ops';
+async function loadUserManagement(tab) {
+  if (tab) userMgmtTab = tab;
+  const content = document.getElementById('content-area');
+  const opsActive = userMgmtTab === 'ops' ? 'active' : '';
+  const clientActive = userMgmtTab === 'client' ? 'active' : '';
+  await loadRegionsCache();
+  content.innerHTML = `<div class="card">
+    <div class="card-title">用户管理</div>
+    <div class="tab-bar">
+      <div class="tab ${opsActive}" onclick="loadUserManagement('ops')">运营端账号</div>
+      <div class="tab ${clientActive}" onclick="loadUserManagement('client')">客户端账号</div>
+    </div>
+    <div style="margin-bottom:16px"><button class="btn btn-sm" onclick="showCreateUserModal()">创建账号</button></div>
+    <div id="user-table">加载中...</div>
+  </div>`;
+  try {
+    // Fetch all users and filter by tab
+    const allUsers = await apiCall('GET', '/users?page_size=100');
+    const filtered = userMgmtTab === 'ops'
+      ? allUsers.filter(u => u.role === 'admin' || u.role === 'ops')
+      : allUsers.filter(u => u.role === 'client');
+    const statusMap = { active:['正常','green'], pending:['待审核','orange'], disabled:['禁用','red'] };
+    let html = `<table><thead><tr><th>用户名</th><th>姓名</th><th>角色</th><th>组织层级</th><th>区域</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody>`;
+    if (filtered.length === 0) html += `<tr><td colspan="8" class="empty">暂无${userMgmtTab === 'ops' ? '运营端' : '客户端'}账号</td></tr>`;
+    filtered.forEach(u => {
+      const s = statusMap[u.status]||[u.status,'default'];
+      const roleMap = { admin:['管理员','orange'], ops:['运营','blue'], client:['客户端','green'] };
+      const r = roleMap[u.role]||[u.role,'default'];
+      const orgLabel = u.org_level === 'HQ' ? '总部' : '区域';
+      html += `<tr><td>${u.username}</td><td>${u.real_name||'-'}</td><td><span class="tag tag-${r[1]}">${r[0]}</span></td><td><span class="tag tag-${u.org_level==='HQ'?'orange':'blue'}">${orgLabel}</span></td><td>${u.region||'-'}</td><td><span class="tag tag-${s[1]}">${s[0]}</span></td><td>${u.created_at?new Date(u.created_at).toLocaleString('zh-CN'):'-'}</td>`;
+      html += `<td>`;
+      if (u.status === 'pending') html += `<button class="btn btn-sm btn-success" onclick="approveUser('${u.id}')">审核</button> `;
+      html += `<button class="btn btn-sm btn-default" onclick="resetUserPw('${u.id}')">重置密码</button> `;
+      if (u.status !== 'disabled') html += `<button class="btn btn-sm btn-danger" onclick="disableUser('${u.id}')">禁用</button>`;
+      html += `</td></tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('user-table').innerHTML = html;
+  } catch(e) { document.getElementById('user-table').innerHTML = `<p class="error-msg">${e.message}</p>`; }
+}
+
+function showCreateUserModal() {
+  const regionOpts = regionsCache.map(r => `<option value="${r.name}">${r.name}</option>`).join('');
+  const isOpsTab = userMgmtTab === 'ops';
+  const defaultRole = isOpsTab ? 'ops' : 'client';
+  document.getElementById('modal-container').innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal"><h3>创建账号</h3>
+    <div class="form-group"><label>用户名 *</label><input type="text" id="cu-username"></div>
+    <div class="form-group"><label>密码 *</label><input type="password" id="cu-password" placeholder="至少6个字符"></div>
+    <div class="form-group"><label>姓名 *</label><input type="text" id="cu-realname"></div>
+    <div class="form-group"><label>角色 *</label><select id="cu-role">
+      <option value="ops" ${defaultRole==='ops'?'selected':''}>运营端</option>
+      <option value="admin" ${defaultRole==='admin'?'selected':''}>管理员</option>
+      <option value="client" ${defaultRole==='client'?'selected':''}>客户端</option>
+    </select></div>
+    <div class="form-group"><label>组织层级</label><select id="cu-org-level"><option value="region">区域</option><option value="HQ">总部</option></select></div>
+    <div class="form-group"><label>区域</label><select id="cu-region"><option value="">--选择区域--</option>${regionOpts}</select></div>
+    <div class="form-group"><label>手机</label><input type="text" id="cu-phone" placeholder="手机号（选填）"></div>
+    <div class="modal-actions"><button class="btn btn-default" onclick="closeModal()">取消</button><button class="btn" onclick="createUserAccount()">创建</button></div></div></div>`;
+  document.getElementById('cu-role').value = defaultRole;
+}
+
+async function createUserAccount() {
+  const payload = {
+    username: document.getElementById('cu-username').value,
+    password: document.getElementById('cu-password').value,
+    role: document.getElementById('cu-role').value,
+    real_name: document.getElementById('cu-realname').value,
+    org_level: document.getElementById('cu-org-level').value,
+    region: document.getElementById('cu-region').value || null,
+    phone: document.getElementById('cu-phone').value || null,
+  };
+  if (!payload.username || !payload.password || !payload.real_name) { alert('请填写所有必填项'); return; }
+  if (payload.password.length < 6) { alert('密码至少6个字符'); return; }
+  if (payload.role === 'client' && !payload.region) { alert('客户端账号请选择区域'); return; }
+  try { await apiCall('POST', '/users', payload); alert('已创建'); closeModal(); loadUserManagement(); } catch(e) { alert(e.message); }
+}
+
+async function approveUser(id) { try { await apiCall('POST', `/users/${id}/approve`); alert('已审核通过'); loadUserManagement(); } catch(e) { alert(e.message); } }
+async function disableUser(id) { if (!confirm('确定禁用此账号？')) return; try { await apiCall('DELETE', `/users/${id}`); alert('已禁用'); loadUserManagement(); } catch(e) { alert(e.message); } }
+async function resetUserPw(id) {
+  const pw = prompt('请输入新密码（至少6个字符）:');
+  if (!pw) return;
+  if (pw.length < 6) { alert('密码至少6个字符'); return; }
+  try { await apiCall('PATCH', `/users/${id}`, { password: pw }); alert('密码已重置'); } catch(e) { alert(e.message); }
+}
+
+// ── Account Management ──
+async function loadAccount() {
+  const content = document.getElementById('content-area');
+  try {
+    const me = await apiCall('GET', '/auth/me');
+    const roleMap = { admin:'管理员', ops:'运营端', client:'客户端' };
+    content.innerHTML = `<div class="card"><div class="card-title">个人信息</div>
+      <div class="detail-row"><div class="detail-label">用户名</div><div class="detail-value">${me.username}</div></div>
+      <div class="detail-row"><div class="detail-label">姓名</div><div class="detail-value">${me.real_name||'-'}</div></div>
+      <div class="detail-row"><div class="detail-label">角色</div><div class="detail-value"><span class="tag tag-blue">${roleMap[me.role]||me.role}</span></div></div>
+      <div class="detail-row"><div class="detail-label">区域</div><div class="detail-value">${me.region||'-'}</div></div>
+      <div class="detail-row"><div class="detail-label">手机</div><div class="detail-value">${me.phone||'-'}</div></div>
+      <div class="detail-row"><div class="detail-label">邮箱</div><div class="detail-value">${me.email||'-'}</div></div>
+      <div class="detail-row"><div class="detail-label">状态</div><div class="detail-value"><span class="tag tag-green">${me.status==='active'?'正常':me.status}</span></div></div>
+    </div><div class="card"><div class="card-title">修改密码</div>
+      <div class="form-group"><label>原密码</label><input type="password" id="pw-old" placeholder="请输入原密码"></div>
+      <div class="form-group"><label>新密码</label><input type="password" id="pw-new" placeholder="至少6个字符"></div>
+      <div class="form-group"><label>确认新密码</label><input type="password" id="pw-confirm" placeholder="再次输入新密码"></div>
+      <button class="btn" onclick="changePassword()">确认修改</button>
+    </div>`;
+  } catch(e) { content.innerHTML = `<p class="error-msg">${e.message}</p>`; }
+}
+async function changePassword() {
+  const oldPw = document.getElementById('pw-old').value, newPw = document.getElementById('pw-new').value, confirmPw = document.getElementById('pw-confirm').value;
+  if (!oldPw||!newPw) { alert('请填写原密码和新密码'); return; }
+  if (newPw.length<6) { alert('新密码至少6个字符'); return; }
+  if (newPw!==confirmPw) { alert('两次输入的新密码不一致'); return; }
+  try { await apiCall('POST', '/auth/change-password', { old_password: oldPw, new_password: newPw }); alert('密码修改成功，请重新登录'); doLogout(); } catch(e) { alert(e.message); }
+}
+
+// ── Import (batch) ──
+function showImportModal(type) {
+  const titles = { channels: '导入渠道（粘贴JSON数组）', products: '导入商品（粘贴JSON数组）', activities: '导入活动（粘贴JSON数组）' };
+  const examples = {
+    channels: '[{"name":"测试渠道","channel_type":"便利","region":"吉林"}]',
+    products: '[{"upc":"6901234567890","name":"测试商品","brand_series":"测试品牌","spec":"500","pack_quantity":12}]',
+    activities: '[{"region":"吉林省区","activity_time":"4.1-4.30","mechanism":"满79减30"}]',
+  };
+  document.getElementById('modal-container').innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal"><h3>${titles[type]}</h3>
+    <div class="form-group"><label>JSON数据</label><textarea id="import-data" rows="12" style="width:100%;font-family:monospace;font-size:12px" placeholder="${examples[type]}"></textarea></div>
+    <div class="modal-actions"><button class="btn btn-default" onclick="closeModal()">取消</button><button class="btn" onclick="doImport('${type}')">导入</button></div></div></div>`;
+}
+
+async function doImport(type) {
+  const raw = document.getElementById('import-data').value.trim();
+  if (!raw) { alert('请粘贴JSON数据'); return; }
+  let data;
+  try { data = JSON.parse(raw); } catch(e) { alert('JSON格式错误: ' + e.message); return; }
+  if (!Array.isArray(data)) { alert('数据必须是JSON数组'); return; }
+  try {
+    const r = await apiCall('POST', `/${type}/batch`, data);
+    alert(r.detail || '导入成功');
+    closeModal();
+    if (type === 'channels') loadChannels();
+    else if (type === 'products') loadProducts();
+    else if (type === 'activities') loadActivities();
+  } catch(e) { alert('导入失败: ' + e.message); }
+}
+
+// ── Hash routing ──
+window.addEventListener('hashchange', () => { if (token&&currentUser) { const firstMenu = document.querySelector('.menu-item'); if (firstMenu) firstMenu.click(); } });
+
+// ── Auto-login ──
+(async function() {
+  if (token) { try { const me = await apiCall('GET', '/auth/me'); currentUser = { ...JSON.parse(localStorage.getItem('user')||'{}'), ...me }; showApp(); } catch { localStorage.removeItem('token'); localStorage.removeItem('user'); token = null; } }
+})();
+</script>
+</body>
+</html>
